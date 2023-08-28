@@ -1,11 +1,11 @@
 # SIT329-ParkingPRO
-The Main github repo for Group 8. In this repo, we are going to add all the commits and work done by the team. 
+The Main github repo for Group 8. In this repo, we are going to add all the commits and work done by the team. <br>
 
 #Team Members 
-Jayant (221071083)
-Aryan Bagoria (221071501)
-Bhumika Chauhan (222184878)
-Ojasvi Singh (222198105)
+Jayant (221071083)<br>
+Aryan Bagoria (221071501)<br>
+Bhumika Chauhan (222184878)<br>
+Ojasvi Singh (222198105)<br>
 
 #Project Overview 
 The Smart Car Parking System represents a groundbreaking solution to the challenges inherent in conventional parking systems. By harnessing the power of ultrasonic sensors and field-programmable gate arrays (FPGAs), this system redefines the parking experience. Traditional parking systems often suffer from inaccuracies and delays in detecting available spaces, leading to congestion and frustration. However, the Smart Car Parking System addresses these issues with precision.
