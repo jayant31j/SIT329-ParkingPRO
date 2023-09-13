@@ -1,0 +1,99 @@
+module ultrasonic (
+    input clk,                    // Clock signal
+    input start_measurement,      // Initiates distance measurement
+    output sensor_trigger,        // Signal to trigger the ultrasonic sensor
+    input sensor_echo,            // Echo signal from ultrasonic sensor (3.3V level)
+    output [20:0] raw_distance,   // Raw distance measurement
+    output measurement_ready,     // Indicates when a new measurement is ready
+    output timeout_occurred       // Indicates when a timeout has occurred
+);
+
+    // Parameter Definitions
+    parameter CLOCK_FREQ_MHZ = 50;         // Clock frequency in MHz
+    parameter TRIGGER_PULSE_US = 12;       // Duration of the trigger pulse in microseconds
+    parameter TIMEOUT_DURATION_MS = 25;    // Timeout duration in milliseconds
+
+    // Local Parameters
+    localparam COUNT_TRIGGER_PULSE = CLOCK_FREQ_MHZ * TRIGGER_PULSE_US;
+    localparam COUNT_TIMEOUT = CLOCK_FREQ_MHZ * TIMEOUT_DURATION_MS * 1000;
+
+    // Registers
+    reg [20:0] counter;
+    reg [20:0] counter_capture = 21'b0; // Initialize counter_capture with 0
+    reg [2:0] state, next_state;
+
+    // State Definitions
+    localparam STATE_IDLE = 0;               // Initial idle state
+    localparam STATE_TRIGGER = 1;            // State for sending trigger pulse
+    localparam STATE_WAIT_FOR_ECHO = 2;      // State for waiting for echo response
+    localparam STATE_MEASUREMENT = 3;        // State for measuring distance
+    localparam STATE_MEASUREMENT_COMPLETE = 4; // State when measurement is complete
+
+    // State Machine
+    always @(posedge clk) state <= next_state;
+
+    wire measurement; // Indicates when in the measurement state
+    assign measurement = (state == STATE_MEASUREMENT);
+
+    assign measurement_ready = (state == STATE_MEASUREMENT_COMPLETE); // Measurement ready when complete
+
+    wire counter_timeout; // Indicates when a timeout occurs
+    assign counter_timeout = (counter >= COUNT_TIMEOUT);
+
+    assign timeout_occurred = measurement_ready && counter_timeout; // Timeout when measurement ready and timeout occurs
+    assign sensor_trigger = (state == STATE_TRIGGER); // Trigger the sensor when in trigger state
+
+    wire enable_counter; // Enable the counter based on sensor_trigger or sensor_echo
+    assign enable_counter = sensor_trigger || sensor_echo;
+
+    always @(posedge clk) begin
+        if (enable_counter)
+            counter <= counter + 21'b1; // Increment the counter when enabled
+        else
+            counter <= 21'b0; // Reset counter when disabled
+    end
+
+    always @(posedge clk) begin
+        if (enable_counter && measurement) begin
+            counter_capture <= counter; // Capture the counter value when measurement is active
+        end
+        else if (state == STATE_MEASUREMENT_COMPLETE) begin
+            counter_capture <= 21'b0; // Reset counter_capture when not in measurement state
+        end
+    end
+
+    always @(*) begin
+        next_state <= state; // By default, maintain the current state
+
+        case (state)
+            STATE_IDLE: begin
+                if (start_measurement) next_state <= STATE_TRIGGER; // Transition to trigger state when measurement is initiated
+            end
+
+            STATE_TRIGGER: begin
+                if (counter >= COUNT_TRIGGER_PULSE) next_state <= STATE_WAIT_FOR_ECHO; // Wait for echo after trigger pulse
+            end
+
+            STATE_WAIT_FOR_ECHO: begin
+                if (sensor_echo) next_state <= STATE_MEASUREMENT; // Transition to measurement state when echo is detected
+            end
+
+            STATE_MEASUREMENT: begin
+                if (counter_timeout || (~sensor_echo)) begin
+                    next_state <= STATE_MEASUREMENT_COMPLETE; // Transition to measurement complete state on timeout or when echo ends
+                end
+            end
+
+            STATE_MEASUREMENT_COMPLETE: begin
+                next_state <= STATE_IDLE; // Return to idle state when measurement is complete
+            end
+
+            default: begin
+                next_state <= STATE_IDLE; // Default to idle state
+            end
+        endcase
+    end
+
+    // Assign the captured counter value to raw_distance
+    assign raw_distance = counter_capture;
+endmodule
