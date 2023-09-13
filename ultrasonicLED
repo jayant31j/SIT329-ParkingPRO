@@ -1,0 +1,56 @@
+module ultrasonicLED (
+    input CLOCK_50,                 // 50 MHz clock signal
+    output ultrasonic_trigger,     // Trigger signal for ultrasonic sensor
+    input ultrasonic_echo,         // Echo signal from ultrasonic sensor (3.3V level)
+    output [7:0] LEDs              // LEDs for distance indication
+);
+
+    // Wires for communication between modules
+    wire start_measurement, new_measurement_ready, measurement_timeout_occurred;
+    wire [20:0] measured_distance;
+
+    // Counter for triggering distance measurements
+    reg [24:0] ping_counter;
+
+    // Local Parameters for configuring the system
+    localparam CLOCK_FREQ_MHZ = 50;         // 50 MHz clock frequency
+    localparam PING_PERIOD_MS = 60;         // Period of ping measurements in ms
+    localparam MAX_PING_COUNTER = CLOCK_FREQ_MHZ * PING_PERIOD_MS * 1000;
+    localparam DISTANCE_FACTOR = 2900;      // Distance conversion factor
+
+    // Instantiate Ultrasonic Module
+    ultrasonic #(
+        .CLOCK_FREQ_MHZ(50),
+        .TRIGGER_PULSE_US(12),
+        .TIMEOUT_DURATION_MS(3)
+    ) U1 (
+        .clk(CLOCK_50),
+        .sensor_trigger(ultrasonic_trigger),
+        .sensor_echo(ultrasonic_echo),
+        .start_measurement(start_measurement),
+        .measurement_ready(new_measurement_ready),
+        .timeout_occurred(measurement_timeout_occurred),
+        .raw_distance(measured_distance)
+    );
+
+    // LED Assignments based on measured distance and timeout status
+    assign LEDs[6] = (measured_distance > 40 * DISTANCE_FACTOR); // LED 6 indicates distance greater than 40 times conversion factor
+    assign LEDs[5] = (measured_distance > 30 * DISTANCE_FACTOR); // LED 5 indicates distance greater than 30 times conversion factor
+    assign LEDs[4] = (measured_distance > 25 * DISTANCE_FACTOR); // LED 4 indicates distance greater than 25 times conversion factor
+    assign LEDs[3] = (measured_distance > 20 * DISTANCE_FACTOR); // LED 3 indicates distance greater than 20 times conversion factor
+    assign LEDs[2] = (measured_distance > 15 * DISTANCE_FACTOR); // LED 2 indicates distance greater than 15 times conversion factor
+    assign LEDs[1] = (measured_distance > 10 * DISTANCE_FACTOR); // LED 1 indicates distance greater than 10 times conversion factor
+    assign LEDs[0] = (measured_distance > 5 * DISTANCE_FACTOR);  // LED 0 indicates distance greater than 5 times conversion factor
+    assign LEDs[7] = measurement_timeout_occurred;              // LED 7 indicates a measurement timeout
+
+    // Ping Trigger Logic
+    assign start_measurement = (ping_counter == MAX_PING_COUNTER - 1); // Initiate a new measurement when the ping_counter reaches the maximum count
+
+    // Counter for triggering distance measurements (resets at MAX_PING_COUNTER)
+    always @(posedge CLOCK_50) begin
+        if (ping_counter == MAX_PING_COUNTER - 1)
+            ping_counter <= 25'd0; // Reset the ping counter
+        else
+            ping_counter <= ping_counter + 25'd1; // Increment the ping counter
+    end
+endmodule
