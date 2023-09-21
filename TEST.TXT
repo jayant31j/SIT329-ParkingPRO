@@ -1,0 +1,79 @@
+`timescale 1ns / 1ps
+
+module tb_mojo_top;
+
+  // Inputs
+  reg clk;
+  reg rst_n;
+  reg cclk;
+  reg start;
+  reg avr_tx;
+  reg avr_rx_busy;
+  reg spi_ss;
+  reg spi_mosi;
+  reg spi_sck;
+
+  // Outputs
+  wire [7:0] led;
+  wire spi_miso;
+  wire [3:0] spi_channel;
+  wire avr_rx;
+  wire RS, RW, E;
+  wire [7:0] data;
+
+  // Instantiate the module under test
+  mojo_top uut (
+    .clk(clk),
+    .rst_n(rst_n),
+    .cclk(cclk),
+    .start(start),
+    .avr_tx(avr_tx),
+    .avr_rx(avr_rx),
+    .avr_rx_busy(avr_rx_busy),
+    .spi_ss(spi_ss),
+    .spi_mosi(spi_mosi),
+    .spi_sck(spi_sck),
+    .spi_miso(spi_miso),
+    .spi_channel(spi_channel),
+    .led(led),
+    .RS(RS),
+    .RW(RW),
+    .E(E),
+    .data(data)
+  );
+
+  // Clock generation
+  always begin
+    #5 clk = ~clk; // Assuming a 10ns clock period
+  end
+
+  // Reset generation
+  initial begin
+    clk = 0;
+    rst_n = 0;
+    cclk = 0;
+    start = 0;
+    avr_tx = 0;
+    avr_rx_busy = 0;
+    spi_ss = 0;
+    spi_mosi = 0;
+    spi_sck = 0;
+    #20 rst_n = 1; // Deassert reset
+    #100;
+    // Add your test scenario here
+    // For example, to start the operation:
+    // start = 1;
+    // #10 start = 0;
+    // Monitor outputs and verify results
+    // Add assertions or print statements as needed
+    // For example, to check if a certain condition is met:
+    // assert(some_condition) else $display("Test failed");
+    // $finish;
+  end
+
+  // Optionally, add simulation termination conditions
+  // initial begin
+  //   $finish;
+  // end
+
+endmodule
