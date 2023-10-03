@@ -3,11 +3,14 @@ module ultrasonicLED (
     output ultrasonic_trigger,     // Trigger signal for ultrasonic sensor
     input ultrasonic_echo,         // Echo signal from ultrasonic sensor (3.3V level)
     output [7:0] LEDs              // LEDs for distance indication
+    output [7:0] measured_distance_cm; // Measured distance in centimeters
 );
 
     // Wires for communication between modules
     wire start_measurement, new_measurement_ready, measurement_timeout_occurred;
     wire [20:0] measured_distance;
+    wire [7:0] distance_in_cm;
+
 
     // Counter for triggering distance measurements
     reg [24:0] ping_counter;
@@ -42,6 +45,13 @@ module ultrasonicLED (
     assign LEDs[1] = (measured_distance > 10 * DISTANCE_FACTOR); // LED 1 indicates distance greater than 10 times conversion factor
     assign LEDs[0] = (measured_distance > 5 * DISTANCE_FACTOR);  // LED 0 indicates distance greater than 5 times conversion factor
     assign LEDs[7] = measurement_timeout_occurred;              // LED 7 indicates a measurement timeout
+
+    // Logic for getting distance in cm 
+    always @(*) begin
+        // Calculate the distance in centimeters
+        distance_in_cm = measured_distance / DISTANCE_FACTOR;
+    end
+    assign measured_distance_cm = distance_in_cm;
 
     // Ping Trigger Logic
     assign start_measurement = (ping_counter == MAX_PING_COUNTER - 1); // Initiate a new measurement when the ping_counter reaches the maximum count
