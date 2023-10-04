@@ -24,14 +24,14 @@ class ParkingProApp:
         self.fill_time_labels = []
         
         for i in range(self.num_spaces):
-            space_label = tk.Label(self.space_frame, text=f"Space {i+1}", width=10)
-            fill_time_label = tk.Label(self.space_frame, text="Est. Time: ", width=10)
+            space_label = tk.Label(self.space_frame, text=f"Space {i+1}", width=15)
+            fill_time_label = tk.Label(self.space_frame, text="Est. Time: ", width=15)  # Increase the width
             self.space_labels.append(space_label)
             self.fill_time_labels.append(fill_time_label)
         
         for i in range(self.num_spaces):
-            self.space_labels[i].grid(row=i, column=0, padx=5, pady=5)
-            self.fill_time_labels[i].grid(row=i, column=1, padx=5, pady=5)
+            self.space_labels[i].grid(row=i, column=0, padx=5, pady=5, sticky="w")
+            self.fill_time_labels[i].grid(row=i, column=1, padx=5, pady=5, sticky="w")
         
         self.update_button = tk.Button(root, text="Update", command=self.update_parking_status)
         self.update_button.pack(pady=10)
@@ -59,7 +59,7 @@ class ParkingProApp:
         for i in range(self.num_spaces):
             if i in empty_spaces:
                 self.space_labels[i].config(bg="green", text=f"Space {i+1} (Empty)")
-                self.fill_time_labels[i].config(text=f"Est. Time: N/A")
+                self.fill_time_labels[i].config(text="Est. Time: N/A")
             else:
                 self.space_labels[i].config(bg="red", text=f"Space {i+1} (Filled)")
                 self.fill_time_labels[i].config(text=f"Est. Time: {self.fill_time_estimates[i]} mins")
